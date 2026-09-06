@@ -3,13 +3,13 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.json({ message: 'Backend is running!' });
 });
 
-const products = [
+let products = [
   { id: 1, name: 'Laptop', price: 50000, category: 'Laptop', image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300', desc: '16GB RAM, 512GB SSD, Intel i7 Processor. Perfect for work and gaming.' },
   { id: 2, name: 'Mobile', price: 20000, category: 'Mobile', image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300', desc: '128GB Storage, 50MP Camera, 5000mAh Battery. 6.7 inch AMOLED Display.' },
   { id: 3, name: 'Headphones', price: 3000, category: 'Accessories', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400', desc: 'Active Noise Cancelling, 40 Hours Battery Life, Bluetooth 5.2' },
@@ -40,6 +40,25 @@ app.get('/products/:id', (req, res) => {
   } else {
     res.status(404).json({ message: 'Product not found' });
   }
+});
+// --- ADMIN PANEL APIS ---
+app.post('/products', (req, res) => {
+  const newProduct = {
+    id: products.length + 1,
+    name: req.body.title || req.body.name,
+    price: Number(req.body.price),
+    category: req.body.category,
+    image: req.body.image,
+    desc: req.body.desc || 'New Product'
+  };
+  products.push(newProduct);
+  res.json(newProduct);
+});
+
+app.delete('/products/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  products = products.filter(p => p.id !== id);
+  res.json({ message: 'Deleted' });
 });
 
 app.listen(PORT, () => {
