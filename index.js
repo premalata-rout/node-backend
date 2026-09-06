@@ -26,4 +26,4 @@ let products = [
 app.get('/products',(req,res)=>res.json(products));
 app.post('/products',(req,res)=>{const p={id:products.length+1,name:req.body.name,price:req.body.price,category:req.body.category,image:req.body.image,desc:req.body.desc};products.push(p);res.json(p);});
 app.delete('/products/:id',(req,res)=>{products=products.filter(p=>p.id!=req.params.id);res.json({message:'Deleted'});});
-app.listen(process.env.PORT||10000,()=>console.log('running'));
+app.listen(process.env.PORT||10000,'0.0.0.0',()=>console.log('running on 0.0.0.0'));
