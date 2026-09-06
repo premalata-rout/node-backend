@@ -1,12 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const PORT = process.env.PORT || 10000;
-
 app.use(cors());
 app.use(express.json());
-
-app.get('/', (req,res)=> res.json({message:'Backend is running!'}));
+app.get('/',(req,res)=>res.json({message:'Backend is running!'}));
 
 let products = [
   { id: 1, name: 'Laptop', price: 50000, category: 'Laptop', image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300', desc: '16GB RAM, 512GB SSD, Intel i7 Processor. Perfect for work and gaming.' },
@@ -26,17 +23,7 @@ let products = [
   { id: 15, name: 'Projector', price: 40000, category: 'Gaming', image: 'https://cdn.mos.cms.futurecdn.net/pjJ5VivxrPhB6Dcdpn49JZ.jpg', desc: '4K Home Theater Projector, 5000 Lumens' }
 ];
 
-app.get('/products',(req,res)=> res.json(products));
-app.get('/products/:id',(req,res)=>{
-  const p = products.find(x=> x.id==req.params.id);
-  if(p) res.json(p); else res.status(404).json({message:'Not found'});
-});
-app.post('/products',(req,res)=>{
-  const np={ id: products.length+1, name: req.body.title||req.body.name, price: Number(req.body.price), category: req.body.category, image: req.body.image, desc: req.body.desc||'New' };
-  products.push(np); res.json(np);
-});
-app.delete('/products/:id',(req,res)=>{
-  products = products.filter(p=> p.id!=req.params.id); res.json({message:'Deleted'});
-});
-
-app.listen(PORT,()=> console.log('Server running on port '+PORT));
+app.get('/products',(req,res)=>res.json(products));
+app.post('/products',(req,res)=>{const p={id:products.length+1,name:req.body.name,price:req.body.price,category:req.body.category,image:req.body.image,desc:req.body.desc};products.push(p);res.json(p);});
+app.delete('/products/:id',(req,res)=>{products=products.filter(p=>p.id!=req.params.id);res.json({message:'Deleted'});});
+app.listen(process.env.PORT||10000,()=>console.log('running'));
