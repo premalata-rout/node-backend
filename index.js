@@ -3,6 +3,7 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -34,17 +35,17 @@ app.get('/products', (req, res) => {
 app.get('/products/:id', (req, res) => {
   const productId = parseInt(req.params.id);
   const product = products.find(p => p.id === productId);
-
   if(product) {
     res.json(product);
   } else {
     res.status(404).json({ message: 'Product not found' });
   }
 });
-// --- ADMIN PANEL APIS ---
+
+// --- ADMIN APIS ---
 app.post('/products', (req, res) => {
   const newProduct = {
-    id: products.length + 1,
+    id: products.length > 0? Math.max(...products.map(p=>p.id)) + 1 : 1,
     name: req.body.title || req.body.name,
     price: Number(req.body.price),
     category: req.body.category,
@@ -55,12 +56,26 @@ app.post('/products', (req, res) => {
   res.json(newProduct);
 });
 
+app.put('/products/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = products.findIndex(p => p.id === id);
+  if(index!== -1){
+    products[index] = {...products[index],...req.body, id: id, price: Number(req.body.price) };
+    res.json(products[index]);
+  } else {
+    res.status(404).json({ message: 'Product not found' });
+  }
+});
+
 app.delete('/products/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  products = products.filter(p => p.id !== id);
+  products = products.filter(p => p.id!== id);
   res.json({ message: 'Deleted' });
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+app.get('/products', (req, res) => {
+  res.json(products);
 });
