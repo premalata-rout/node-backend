@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -73,9 +75,27 @@ app.delete('/products/:id', (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
+let users = [];
+const JWT_SECRET = "secret123";
+
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+  if(users.find(u => u.email === email)) return res.status(400).json({message:'Already exists'});
+  const hash = await bcrypt.hash(password, 10);
+  users.push({id: users.length+1, email, password: hash});
+  res.json({message:'Registered!'});
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find(u => u.email === email);
+  if(!user) return res.status(400).json({message:'Not found'});
+  const ok = await bcrypt.compare(password, user.password);
+  if(!ok) return res.status(400).json({message:'Wrong password'});
+  const token = jwt.sign({email: email}, JWT_SECRET);
+  res.json({token, message:'Login Success'});
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
-app.get('/products', (req, res) => {
-  res.json(products);
 });
