@@ -7,7 +7,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-
+const authRoutes = require('./auth');
+app.use('/auth', authRoutes);
 app.get('/', (req, res) => {
   res.json({ message: 'Backend is running!' });
 });
