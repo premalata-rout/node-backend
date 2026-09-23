@@ -2,8 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,20 +21,13 @@ const productSchema = new mongoose.Schema({
 });
 const Product = mongoose.model('Product', productSchema);
 
-const userSchema = new mongoose.Schema({
-  email: String,
-  password: String
-});
-const User = mongoose.model('User', userSchema);
-
-// FIXED: Added status field
 const orderSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   products: { type: Array, required: true },
   total: { type: Number, required: true },
   address: { type: String, required: true },
   paymentMethod: { type: String, default: "COD" },
-  status: { type: String, default: "Placed" }, // Placed / Cancelled
+  status: { type: String, default: "Placed" },
   date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -90,34 +81,11 @@ app.delete('/products/:id', async (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
-const JWT_SECRET = "secret123";
-
-app.post('/register', async (req, res) => {
-  const { email, password } = req.body;
-  const exists = await User.findOne({ email });
-  if(exists) return res.status(400).json({message:'Already exists'});
-  const hash = await bcrypt.hash(password, 10);
-  const user = new User({ email, password: hash });
-  await user.save();
-  res.json({message:'Registered!'});
-});
-
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if(!user) return res.status(400).json({message:'Not found'});
-  const ok = await bcrypt.compare(password, user.password);
-  if(!ok) return res.status(400).json({message:'Wrong password'});
-  const token = jwt.sign({email: email}, JWT_SECRET);
-  res.json({token, message:'Login Success'});
-});
-
-// Order APIs
 app.post('/api/order/place', async (req, res) => {
   try {
     const order = new Order(req.body);
     await order.save();
-    res.json({ message: "Order Placed Successfully" });
+    res.json({ message: "Order Placed Successfully", order });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -125,7 +93,8 @@ app.post('/api/order/place', async (req, res) => {
 
 app.get('/api/order/:userId', async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.params.userId }).sort({ date: -1 });
+    const userId = decodeURIComponent(req.params.userId);
+    const orders = await Order.find({ userId: userId }).sort({ date: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -134,7 +103,6 @@ app.get('/api/order/:userId', async (req, res) => {
 
 app.put('/api/order/cancel/:id', async (req, res) => {
   try {
-    console.log("Cancelling Order:", req.params.id);
     const updated = await Order.findByIdAndUpdate(
       req.params.id,
       { status: "Cancelled" },
