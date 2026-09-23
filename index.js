@@ -30,6 +30,16 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+// NEW: Order Schema Added
+const orderSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  products: { type: Array, required: true },
+  total: { type: Number, required: true },
+  address: { type: String, required: true },
+  date: { type: Date, default: Date.now }
+});
+const Order = mongoose.model('Order', orderSchema);
+
 app.use(cors());
 app.use(express.json());
 
@@ -99,6 +109,26 @@ app.post('/login', async (req, res) => {
   if(!ok) return res.status(400).json({message:'Wrong password'});
   const token = jwt.sign({email: email}, JWT_SECRET);
   res.json({token, message:'Login Success'});
+});
+
+// NEW: Order APIs Added
+app.post('/api/order/place', async (req, res) => {
+  try {
+    const order = new Order(req.body);
+    await order.save();
+    res.json({ message: "Order Placed Successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/order/:userId', async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.params.userId }).sort({ date: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => {
