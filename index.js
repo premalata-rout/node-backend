@@ -8,7 +8,6 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MongoDB Connect
 mongoose.connect(process.env.MONGO_URI)
 .then(()=> console.log("MongoDB Connected!"))
 .catch(err => console.log(err));
@@ -30,12 +29,14 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+// FIXED: Added status field
 const orderSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   products: { type: Array, required: true },
   total: { type: Number, required: true },
   address: { type: String, required: true },
   paymentMethod: { type: String, default: "COD" },
+  status: { type: String, default: "Placed" }, // Placed / Cancelled
   date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -131,16 +132,28 @@ app.get('/api/order/:userId', async (req, res) => {
   }
 });
 
-app.delete('/api/order/:id', async (req, res) => {
+app.put('/api/order/cancel/:id', async (req, res) => {
   try {
-    console.log("Deleting Order:", req.params.id);
-    const deleted = await Order.findByIdAndDelete(req.params.id);
-    if (!deleted) {
+    console.log("Cancelling Order:", req.params.id);
+    const updated = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status: "Cancelled" },
+      { new: true }
+    );
+    if (!updated) {
       return res.status(404).json({ error: "Order not found" });
     }
-    res.json({ message: "Order Deleted Successfully", orderId: req.params.id });
+    res.json({ message: "Order Cancelled", order: updated });
   } catch (err) {
-    console.error("Delete Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/order/:id', async (req, res) => {
+  try {
+    await Order.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
