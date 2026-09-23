@@ -30,12 +30,12 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// NEW: Order Schema Added
 const orderSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   products: { type: Array, required: true },
   total: { type: Number, required: true },
   address: { type: String, required: true },
+  paymentMethod: { type: String, default: "COD" },
   date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -111,7 +111,7 @@ app.post('/login', async (req, res) => {
   res.json({token, message:'Login Success'});
 });
 
-// NEW: Order APIs Added
+// Order APIs
 app.post('/api/order/place', async (req, res) => {
   try {
     const order = new Order(req.body);
@@ -127,6 +127,20 @@ app.get('/api/order/:userId', async (req, res) => {
     const orders = await Order.find({ userId: req.params.userId }).sort({ date: -1 });
     res.json(orders);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/order/:id', async (req, res) => {
+  try {
+    console.log("Deleting Order:", req.params.id);
+    const deleted = await Order.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    res.json({ message: "Order Deleted Successfully", orderId: req.params.id });
+  } catch (err) {
+    console.error("Delete Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
