@@ -117,15 +117,6 @@ app.put('/api/order/cancel/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/order/:id', async (req, res) => {
-  try {
-    await Order.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
