@@ -85,6 +85,7 @@ app.post('/api/order/place', async (req, res) => {
   try {
     const order = new Order(req.body);
     await order.save();
+    console.log("New Order Placed:", order._id);
     res.json({ message: "Order Placed Successfully", order });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -94,7 +95,9 @@ app.post('/api/order/place', async (req, res) => {
 app.get('/api/order/:userId', async (req, res) => {
   try {
     const userId = decodeURIComponent(req.params.userId);
+    console.log("Fetching orders for:", userId);
     const orders = await Order.find({ userId: userId }).sort({ date: -1 });
+    console.log("Found orders:", orders.length);
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -103,14 +106,10 @@ app.get('/api/order/:userId', async (req, res) => {
 
 app.put('/api/order/cancel/:id', async (req, res) => {
   try {
-    const updated = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status: "Cancelled" },
-      { new: true }
-    );
-    if (!updated) {
-      return res.status(404).json({ error: "Order not found" });
-    }
+    console.log("Cancel request:", req.params.id);
+    const updated = await Order.findByIdAndUpdate(req.params.id, { status: "Cancelled" }, { new: true });
+    if (!updated) return res.status(404).json({ error: "Order not found" });
+    console.log("Cancelled success:", updated._id);
     res.json({ message: "Order Cancelled", order: updated });
   } catch (err) {
     res.status(500).json({ error: err.message });
